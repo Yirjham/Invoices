@@ -18,7 +18,9 @@ public class InvoicesController : ControllerBase
     public async Task<IActionResult> Create(CreateInvoiceCommand command)
     {
         var result = await _handler.Create(command);
-        if (result.IsValid) return Accepted(result.Entity);
-        return BadRequest(result.ValidationErrors);
+
+        return result.Match<IActionResult>(
+            invoice => Accepted(invoice),
+            errors => BadRequest(errors));
     }
 }

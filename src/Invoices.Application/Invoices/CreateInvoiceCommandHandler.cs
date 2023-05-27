@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Invoices.Application.Common;
 using Invoices.Domain;
@@ -24,21 +23,19 @@ public class CreateInvoiceCommandHandler : ICreateInvoiceCommandHandler
     {
         var errors = await Validate(command);
 
-        if (errors.Any())
-        {
-            return new(errors);
-        }
+        if (errors.Any()) return errors;
 
         var invoice = Map(command);
         var isSuccess = await _repository.Add(invoice);
 
-        if (!isSuccess) return new(new List<string> { "Not saved."});
-        return new() {Entity = invoice};
+        if (!isSuccess) return new ValidationErrors { "Not saved."};
+
+        return invoice;
     }
 
-    private async Task<List<string>> Validate(CreateInvoiceCommand command)
+    private async Task<ValidationErrors> Validate(CreateInvoiceCommand command)
     {
-        var result = new List<string>();
+        var result = new ValidationErrors();
 
         if (command is null)
         {
@@ -68,7 +65,7 @@ public class CreateInvoiceCommandHandler : ICreateInvoiceCommandHandler
 
     private static Invoice Map(CreateInvoiceCommand command)
     {
-        return new Invoice()
+        return new Invoice
         {
             Amount = command.Amount,
             CustomerName = command.CustomerName,

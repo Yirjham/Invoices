@@ -1,21 +1,38 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Invoices.Application.Common;
 
-public class Result<T>
+public readonly struct Result<T>
 {
-    public Result()
+    private readonly bool _isSuccess;
+    private readonly T _entity;
+    private readonly ValidationErrors _validationErrors;
+
+    public Result(T entity)
     {
-        
+        _isSuccess = true;
+        _entity = entity;
+        _validationErrors = default;
     }
 
-    public Result(List<string> errors)
+    public Result(ValidationErrors errors)
     {
-        ValidationErrors = errors;
+        _isSuccess = false;
+        _entity = default;
+        _validationErrors = errors;
     }
-    public T Entity { get; set; }
-    public List<string> ValidationErrors { get; } = new();
-    public bool IsValid => !ValidationErrors.Any();
 
+    public TResult Match<TResult>(Func<T, TResult> success, Func<ValidationErrors, TResult> failure)
+    {
+        return _isSuccess ? success(_entity) : failure(_validationErrors);
+    }
+
+    public static implicit operator Result<T>(T entity) => new(entity);
+    public static implicit operator Result<T>(ValidationErrors errors) => new(errors);
+}
+
+public class ValidationErrors : List<string>
+{
 }
